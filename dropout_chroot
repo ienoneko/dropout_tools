@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from argparse import ArgumentParser
-from os import CLONE_NEWUSER, chdir, chroot, execl, unshare
+from os import CLONE_NEWUSER, chdir, chroot, execve, unshare
 
 ap = ArgumentParser()
 ap.add_argument('newroot')
@@ -9,4 +9,4 @@ args = ap.parse_args()
 unshare(CLONE_NEWUSER)  # Gain us CAP_SYS_CHROOT
 chdir(args.newroot)
 chroot('.')
-execl('bin/sh', 'sh')
+execve('bin/sh', [ 'sh', '-l' ], {})
