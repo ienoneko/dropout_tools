@@ -11,6 +11,7 @@ def copy_key_if_exist(dst, src, k):
 
 ap = ArgumentParser()
 ap.add_argument('-g', '--gid', type=int, default=0, help='use given group ID over root')
+ap.add_argument('-s', '--shell', default='/bin/sh')
 ap.add_argument('-u', '--uid', type=int, default=0, help='use given user ID over root')
 ap.add_argument('newroot')
 args = ap.parse_args()
@@ -31,8 +32,8 @@ mount('/proc', 'proc', None, MS_BIND | MS_REC, None)
 
 chroot('.')
 
-sh_envp = {}
+sh_envp = { 'SHELL': args.shell }
 # Popluate a few from host
 copy_key_if_exist(sh_envp, environ, 'TERM')
 
-execve('bin/sh', [ 'sh', '-l' ], sh_envp)
+execve(args.shell, [ args.shell, '-l' ], sh_envp)
