@@ -26,6 +26,7 @@ Path('/proc/self/gid_map').write_text(f'{args.gid} {host_gid} 1')
 
 chdir(args.newroot)
 mount('/dev', 'dev', None, MS_BIND | MS_REC, None)
+mount('/proc', 'proc', None, MS_BIND | MS_REC, None)
 
 chroot('.')
 
