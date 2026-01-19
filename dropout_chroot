@@ -24,7 +24,8 @@ Path('/proc/self/uid_map').write_text(f'{args.uid} {host_uid} 1')
 Path('/proc/self/setgroups').write_text('deny')  # See user_namespaces(7)
 Path('/proc/self/gid_map').write_text(f'{args.gid} {host_gid} 1')
 
-chdir(args.newroot)
+mount(args.newroot, args.newroot, None, MS_BIND, None)  # Trick to convert `/' into a mount point
+chdir(args.newroot)  # N.B. must not be done before mounting on itself
 mount('/dev', 'dev', None, MS_BIND | MS_REC, None)
 mount('/proc', 'proc', None, MS_BIND | MS_REC, None)
 
