@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from argparse import ArgumentParser
-from os import CLONE_NEWUSER, chdir, chroot, environ, execve, unshare
+from os import CLONE_NEWNS, CLONE_NEWUSER, chdir, chroot, environ, execve, unshare
+
+from dropout_os_ext_linux import MS_BIND, MS_REC, mount
 
 def copy_key_if_exist(dst, src, k):
   if k in src.keys():
@@ -10,8 +12,11 @@ ap = ArgumentParser()
 ap.add_argument('newroot')
 args = ap.parse_args()
 
-unshare(CLONE_NEWUSER)  # Gain us CAP_SYS_CHROOT
+unshare(CLONE_NEWNS | CLONE_NEWUSER)  # Gain us CAP_SYS_CHROOT, and ability to use mounts.
+
 chdir(args.newroot)
+mount('/dev', 'dev', None, MS_BIND | MS_REC, None)
+
 chroot('.')
 
 sh_envp = {}
