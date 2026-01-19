@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from argparse import ArgumentParser
-from os import CLONE_NEWNS, CLONE_NEWUSER, chdir, chroot, environ, execve, unshare
+from os import CLONE_NEWNS, CLONE_NEWUSER, chdir, chroot, environ, execve, getgid, getuid, unshare
+from pathlib import Path
 
 from dropout_os_ext_linux import MS_BIND, MS_REC, mount
 
@@ -9,10 +10,19 @@ def copy_key_if_exist(dst, src, k):
     dst[k] = src[k]
 
 ap = ArgumentParser()
+ap.add_argument('-g', '--gid', type=int, default=0, help='use given group ID over root')
+ap.add_argument('-u', '--uid', type=int, default=0, help='use given user ID over root')
 ap.add_argument('newroot')
 args = ap.parse_args()
 
+# These'd return garbages once unshare() is called
+host_uid = getuid()
+host_gid = getgid()
+
 unshare(CLONE_NEWNS | CLONE_NEWUSER)  # Gain us CAP_SYS_CHROOT, and ability to use mounts.
+Path('/proc/self/uid_map').write_text(f'{args.uid} {host_uid} 1')
+Path('/proc/self/setgroups').write_text('deny')  # See user_namespaces(7)
+Path('/proc/self/gid_map').write_text(f'{args.gid} {host_gid} 1')
 
 chdir(args.newroot)
 mount('/dev', 'dev', None, MS_BIND | MS_REC, None)
