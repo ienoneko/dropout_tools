@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 from argparse import ArgumentParser
-from os import CLONE_NEWUSER, chdir, chroot, execve, unshare
+from os import CLONE_NEWUSER, chdir, chroot, environ, execve, unshare
+
+def copy_key_if_exist(dst, src, k):
+  if k in src.keys():
+    dst[k] = src[k]
 
 ap = ArgumentParser()
 ap.add_argument('newroot')
@@ -9,4 +13,9 @@ args = ap.parse_args()
 unshare(CLONE_NEWUSER)  # Gain us CAP_SYS_CHROOT
 chdir(args.newroot)
 chroot('.')
-execve('bin/sh', [ 'sh', '-l' ], {})
+
+sh_envp = {}
+# Popluate a few from host
+copy_key_if_exist(sh_envp, environ, 'TERM')
+
+execve('bin/sh', [ 'sh', '-l' ], sh_envp)
