@@ -2,6 +2,8 @@
 from ctypes import CDLL, c_char_p, c_int, c_ulong, c_void_p, get_errno
 from os import strerror
 
+MS_RDONLY = 1
+MS_REMOUNT = 32
 MS_BIND = 4096
 MS_REC = 16384
 

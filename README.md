@@ -30,6 +30,8 @@ As an example, to use this new user we've just created, add `-u 1000 -g 1000 -d 
 
 Note that no matter which user you use, all files inside your system are always writable, including system ones.
 
+To avoid accidental changes to rootfs, use `-r` option to enter your system, would keep only user home writable.
+
 ##### Installing Alpine Linux
 
 Alpine provided "Mini root filesystem" on their [download page](https://www.alpinelinux.org/downloads/).

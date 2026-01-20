@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 from argparse import ArgumentParser
 from os import CLONE_NEWNS, CLONE_NEWUSER, chdir, chroot, environ, execve, getgid, getuid, unshare
+import os.path
 from pathlib import Path
 
-from dropout_os_ext_linux import MS_BIND, MS_REC, mount
+from dropout_os_ext_linux import MS_BIND, MS_RDONLY, MS_REC, MS_REMOUNT, mount
 
 def copy_key_if_exist(dst, src, k):
   if k in src.keys():
@@ -12,6 +13,7 @@ def copy_key_if_exist(dst, src, k):
 ap = ArgumentParser()
 ap.add_argument('-d', '--home-dir', default='/root')
 ap.add_argument('-g', '--gid', type=int, default=0, help='use given group ID over root')
+ap.add_argument('-r', '--read-only', action='store_true')
 ap.add_argument('-s', '--shell', default='/bin/sh')
 ap.add_argument('-u', '--uid', type=int, default=0, help='use given user ID over root')
 ap.add_argument('newroot')
@@ -27,9 +29,14 @@ Path('/proc/self/setgroups').write_text('deny')  # See user_namespaces(7)
 Path('/proc/self/gid_map').write_text(f'{args.gid} {host_gid} 1')
 
 mount(args.newroot, args.newroot, None, MS_BIND, None)  # Trick to convert `/' into a mount point
+if args.read_only:
+  home_abs = os.sep.join([ args.newroot, args.home_dir ])
+  mount(home_abs, home_abs, None, MS_BIND, None)  # Clearing RO bit is cumbersome, so this instead.
+  mount(None, args.newroot, None, MS_BIND | MS_REMOUNT | MS_RDONLY, None)  # Must be done separately.
 chdir(args.newroot)  # N.B. must not be done before mounting on itself
 mount('/dev', 'dev', None, MS_BIND | MS_REC, None)
 mount('/proc', 'proc', None, MS_BIND | MS_REC, None)
+mount('none', 'tmp', 'tmpfs', 0, None)
 
 chroot('.')
 
